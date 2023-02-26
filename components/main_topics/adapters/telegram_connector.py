@@ -1,7 +1,8 @@
-from telethon import TelegramClient
+from datetime import datetime, timedelta, timezone
+from .dto import MessagesTable
+
+from telethon.sync import TelegramClient
 from telethon.errors import SessionPasswordNeededError
-from telethon.tl.functions.messages import (GetHistoryRequest)
-from telethon.tl.types import PeerChannel
 
 
 class TgClient:
@@ -28,21 +29,30 @@ class TgClient:
 
         return client
 
-    def get_messages(self, channel_url: str):
+    def get_messages(
+            self, channel_url: str, depth_days: int, limit: int = 1000
+    ) -> MessagesTable:
+        # TODO если канал закрытый, то вернуть сообщение
+
         channel_entity = self.client.get_entity(channel_url)
 
-        # get list of messages
-        offset_id = 0
-        limit = 100
-        all_messages = []
-        total_messages = 0
-        total_count_limit = 0
+        messages_table = MessagesTable(data=dict())
+        idx = 0
+        max_depth_date = datetime.now(timezone.utc) - timedelta(days=depth_days)
 
-        while True:
-            print("Current Offset ID is:", offset_id, "; Total Messages:", total_messages)
-            history = self.client.get_messages(channel_url, limit=100)
+        message_queue = self.client.iter_messages(channel_entity, limit=limit)
 
-            for message in history:
-                all_messages.append(message.message.to_dict())
+        for message in message_queue:
+            # if we get all message of needed depth - break
+            if message.date < max_depth_date:
+                break
 
-            total_messages = len(all_messages)
+            idx += 1
+            messages_table.data[idx] = {
+                'date': message.date,
+                'text': message.message
+            }
+
+        print(len(messages_table))
+
+        return messages_table

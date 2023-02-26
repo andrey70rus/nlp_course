@@ -11,8 +11,12 @@ if __name__ == '__main__':
         username=tg_settings.USERNAME
     )
 
-    channel_url = 'ru2ch_news'  # TODO будет приходить из UI
-    messages = tg_client.get_messages(channel_url=channel_url)
+    # TODO будет приходить из UI:
+    channel_url = 'ru2ch_news'
+    depth_days = 10
 
-    print(type(messages))
-    print(messages)
+    messages = tg_client.get_messages(
+        channel_url=channel_url, depth_days=depth_days
+    )
+
+    print(messages.to_df())
