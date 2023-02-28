@@ -1,8 +1,9 @@
 from datetime import datetime, timedelta, timezone
-from .dto import MessagesTable
 
-from telethon.sync import TelegramClient
 from telethon.errors import SessionPasswordNeededError
+from telethon.sync import TelegramClient
+
+from .dto import MessagesTable
 
 
 class TgClient:
@@ -30,7 +31,7 @@ class TgClient:
         return client
 
     def get_messages(
-            self, channel_url: str, depth_days: int, limit: int = 1000
+            self, channel_url: str, depth_days: int, limit: int = 10000
     ) -> MessagesTable:
         # TODO если канал закрытый, то вернуть сообщение
 
@@ -49,7 +50,7 @@ class TgClient:
 
             idx += 1
             messages_table.data[idx] = {
-                'date': message.date,
+                'datetime': message.date,
                 'text': message.message
             }
 

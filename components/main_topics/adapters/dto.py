@@ -13,6 +13,10 @@ class MessagesTable:
         return len(self.data.keys())
 
     def to_df(self):
-        return pd.DataFrame.from_dict(self.data, orient='index').sort_values(
-            'date', ascending=False
-        )
+        return pd.DataFrame.from_dict(self.data, orient='index')
+
+
+@dataclass
+class DateTopics:
+    date: Optional[datetime]
+    top_keywords: pd.Series

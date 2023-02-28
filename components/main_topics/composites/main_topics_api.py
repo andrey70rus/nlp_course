@@ -1,6 +1,8 @@
 from adapters.telegram_connector import TgClient
 from adapters.settings import Settings
 
+from applications.service import KeyWordsQualifier
+
 tg_settings = Settings()
 
 if __name__ == '__main__':
@@ -13,10 +15,12 @@ if __name__ == '__main__':
 
     # TODO будет приходить из UI:
     channel_url = 'ru2ch_news'
-    depth_days = 10
+    depth_days = 15
 
     messages = tg_client.get_messages(
         channel_url=channel_url, depth_days=depth_days
     )
 
-    print(messages.to_df())
+    keywords_qualifier = KeyWordsQualifier()
+    main_topics = keywords_qualifier.key_words_by_days(messages.to_df())
+
