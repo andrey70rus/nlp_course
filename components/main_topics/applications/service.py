@@ -5,7 +5,7 @@ from nltk.corpus import stopwords
 
 import spacy
 
-from adapters.dto import Topic, DateTopics
+from adapters.dto import DateTopics
 
 
 class KeyWordsQualifier:
@@ -34,10 +34,10 @@ class KeyWordsQualifier:
         # word_importance.index - it is date (without time)
         top_words = word_importance.groupby(word_importance.index).sum()
 
-        for row in top_words.itertuples():
+        for row_idx, row in top_words.iterrows():
             top_list.append(
                 DateTopics(
-                    date=row.index,
+                    date=row_idx,
                     top_keywords=row.sort_values(ascending=False).head(15)
                 )
             )
@@ -76,8 +76,8 @@ class KeyWordsQualifier:
                 text_series.values, batch_size=64, n_process=4
         )):
             new_texts[idx] = ' '.join(
-                [tok.lemma_ for tok in msg if tok.lemma_ not in stop_words
-                 and len(tok.lemma_) > 2]
-            )  # TODO проверить почему слова в 2 символа не сбросились
+                [tok.lemma_.lower() for tok in msg if tok.lemma_.lower()
+                 not in stop_words and len(tok.lemma_) > 2]
+            )
 
         return pd.Series(new_texts)
