@@ -1,18 +1,21 @@
-import pandas as pd
 from datetime import timedelta
-from sklearn.feature_extraction.text import TfidfVectorizer
-from nltk.corpus import stopwords
+from typing import List
 
+import pandas as pd
 import spacy
+from nltk.corpus import stopwords
+from sklearn.feature_extraction.text import TfidfVectorizer
 
 from adapters.dto import DateTopics
+from adapters.telegram_connector import TgClient
 
 
 class KeyWordsQualifier:
-    def __init__(self):
+    def __init__(self, tg_client_adapter):
         self.lemmatize_pipeline = spacy.load('ru_core_news_sm')
+        self.tg_client_adapter: TgClient = tg_client_adapter
 
-    def key_words_by_days(self, messages_df: pd.DataFrame) -> DateTopics:
+    def key_words_by_days(self, messages_df: pd.DataFrame):
         # There are a lot of channels based on Moscow/EU timezone
         messages_df['datetime_GMT3'] = pd.to_datetime(
             messages_df['datetime'] + timedelta(hours=3)
@@ -21,14 +24,12 @@ class KeyWordsQualifier:
         days_messages = messages_df[['date', 'text']]
         days_messages = self._filter_none_text(days_messages)
         tf_idf_importance = self._calc_tf_idf(days_messages)
-        top_list = self.get_top_words(tf_idf_importance)
+        top_list = self._get_top_words(tf_idf_importance)
 
-        print(top_list)
-        ...
-
+        return top_list
 
     @staticmethod
-    def get_top_words(word_importance: pd.DataFrame):
+    def _get_top_words(word_importance: pd.DataFrame) -> List[DateTopics]:
         top_list = []
 
         # word_importance.index - it is date (without time)
@@ -72,12 +73,12 @@ class KeyWordsQualifier:
 
     def _preproc_lemmatize(self, text_series: pd.Series, stop_words=set()):
         new_texts = {}
-        for idx, msg in zip(text_series.index, self.lemmatize_pipeline.pipe(
-                text_series.values, batch_size=64, n_process=4
-        )):
+        for idx, text in text_series.iteritems():
+            lemmatized_text = self.lemmatize_pipeline(text)
             new_texts[idx] = ' '.join(
-                [tok.lemma_.lower() for tok in msg if tok.lemma_.lower()
-                 not in stop_words and len(tok.lemma_) > 2]
+                [tok.lemma_.lower() for tok in lemmatized_text
+                 if tok.lemma_.lower() not in stop_words
+                 and len(tok.lemma_) > 2]
             )
 
         return pd.Series(new_texts)
