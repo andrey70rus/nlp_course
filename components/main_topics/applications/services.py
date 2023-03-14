@@ -11,11 +11,11 @@ from adapters.telegram_connector import TgClient
 
 
 class KeyWordsQualifier:
-    def __init__(self, tg_client_adapter):
+    def __init__(self, tg_client_adapter=None):
         self.lemmatize_pipeline = spacy.load('ru_core_news_sm')
-        self.tg_client_adapter: TgClient = tg_client_adapter
+        # self.tg_client_adapter: TgClient = tg_client_adapter
 
-    def key_words_by_days(self, messages_df: pd.DataFrame):
+    def key_words_by_days(self, messages_df: pd.DataFrame) -> List[DateTopics]:
         # There are a lot of channels based on Moscow/EU timezone
         messages_df['datetime_GMT3'] = pd.to_datetime(
             messages_df['datetime'] + timedelta(hours=3)
